@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Command-line tool: capture software-triggered images from the XCG-CG240C.
+"""Continuously capture software-triggered images from the Sony XCG-CG240C.
 
-Configuration is loaded from camera_module/config.yaml by default.
-Any CLI argument overrides the corresponding config file value.
+Reads settings from camera_module/config.yaml by default.
+Any CLI argument overrides the corresponding config value.
+Press Ctrl+C to stop.
 
 Examples:
 
     # Use config.yaml defaults
     python camera_module/examples/capture_example.py
 
-    # Override specific values
-    python camera_module/examples/capture_example.py --count 10 --delay 0.5
+    # Override delay and output folder
+    python camera_module/examples/capture_example.py --delay 1.0 --output D:/shots
 
     # Use a different config file
     python camera_module/examples/capture_example.py --config my_config.yaml
@@ -33,26 +34,20 @@ from camera_module.config_loader import Config
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Software-triggered capture for the Sony XCG-CG240C",
+        description="Continuous software-triggered capture for the Sony XCG-CG240C",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument(
-        "--config",
-        default=None,
-        help="Path to a YAML config file (default: camera_module/config.yaml).",
-    )
+    parser.add_argument("--config", default=None, help="Path to a YAML config file.")
     parser.add_argument("--list", action="store_true", help="List cameras and exit.")
 
     # Camera overrides
     parser.add_argument("--serial", default=None, help="Camera serial number.")
     parser.add_argument("--ip", default=None, help="Camera IP address.")
     parser.add_argument("--cti", default=None, help="Path to the GenTL producer (*.cti).")
-    parser.add_argument("--timeout", type=float, default=None, help="Fetch timeout (seconds).")
 
     # Capture overrides
-    parser.add_argument("--count", type=int, default=None, help="Number of images.")
     parser.add_argument("--delay", type=float, default=None, help="Seconds between captures.")
-    parser.add_argument("--output", default=None, help="Output directory.")
+    parser.add_argument("--output", default=None, help="Output directory (created if missing).")
     parser.add_argument("--exposure", type=float, default=None, help="Exposure time (µs).")
     parser.add_argument("--gain", type=float, default=None, help="Gain (dB).")
     parser.add_argument("--pixel-format", default=None, help="e.g. BayerRG8, Mono8.")
@@ -67,22 +62,21 @@ def main() -> int:
         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
     )
 
-    # Load config file, then let CLI args override
     cfg = Config.load(args.config)
 
-    serial      = args.serial   or cfg.camera.serial_number
-    ip          = args.ip       or cfg.camera.ip
-    cti         = args.cti      or cfg.camera.cti_file
-    timeout     = args.timeout  if args.timeout  is not None else cfg.camera.fetch_timeout
-    count       = args.count    if args.count    is not None else cfg.capture.count
-    delay       = args.delay    if args.delay    is not None else cfg.capture.delay
-    output      = args.output   or cfg.capture.output_dir
-    exposure    = args.exposure if args.exposure is not None else cfg.capture.exposure_time
-    gain        = args.gain     if args.gain     is not None else cfg.capture.gain
-    pixel_fmt   = args.pixel_format or cfg.capture.pixel_format
+    serial    = args.serial or cfg.camera.serial_number
+    ip        = args.ip     or cfg.camera.ip
+    cti       = args.cti    or cfg.camera.cti_file
+    delay     = args.delay    if args.delay    is not None else cfg.capture.delay
+    output    = args.output   or cfg.capture.output_dir
+    exposure  = args.exposure if args.exposure is not None else cfg.capture.exposure_time
+    gain      = args.gain     if args.gain     is not None else cfg.capture.gain
+    pixel_fmt = args.pixel_format or cfg.capture.pixel_format
 
-    # Serial takes priority; fall back to IP as the search key
     search_key = serial or ip
+
+    # Ensure output directory exists
+    Path(output).mkdir(parents=True, exist_ok=True)
 
     if args.list:
         producer = cti or find_cti_file()
@@ -99,11 +93,7 @@ def main() -> int:
         return 0
 
     try:
-        with SonyXCG240Camera(
-            cti_file=cti,
-            serial_number=search_key,
-            fetch_timeout=timeout,
-        ) as camera:
+        with SonyXCG240Camera(cti_file=cti, serial_number=search_key) as camera:
             if pixel_fmt:
                 camera.pixel_format = pixel_fmt
             if exposure is not None:
@@ -112,11 +102,19 @@ def main() -> int:
                 camera.gain = gain
 
             print(f"Connected: {camera.device_info}")
-            for index in range(count):
+            print(f"Saving images to: {Path(output).resolve()}")
+            print("Press Ctrl+C to stop.\n")
+
+            index = 0
+            while True:
+                index += 1
                 saved = camera.save_image(output)
-                print(f"[{index + 1}/{count}] saved {saved}")
-                if delay and index + 1 < count:
+                print(f"[{index}] saved {saved}")
+                if delay:
                     time.sleep(delay)
+
+    except KeyboardInterrupt:
+        print(f"\nStopped after {index} image(s).")
     except (CameraError, FileNotFoundError, ImportError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

@@ -39,6 +39,7 @@ import logging
 import os
 import re
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
@@ -63,7 +64,10 @@ except ImportError:  # pragma: no cover
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_FETCH_TIMEOUT_S = 5.0
+DEFAULT_FETCH_TIMEOUT_S = 10.0
+CONNECTION_ATTEMPTS = 2
+CONNECTION_TIMEOUT_S = 600.0   # 10 minutes per attempt
+CONNECTION_SCAN_INTERVAL_S = 5.0
 
 _MONO_PATTERN = re.compile(r"Mono(8|10|12|16)")
 _BAYER_PATTERN = re.compile(r"Bayer(RG|GR|GB|BG)(8|10|12|16)")
@@ -258,36 +262,62 @@ class SonyXCG240Camera:
         return self._acquirer is not None
 
     def connect(self) -> "SonyXCG240Camera":
-        """Open the camera and (by default) program the software trigger."""
+        """Open the camera, retrying up to 2 times with a 10-minute timeout each."""
         if self.is_connected:
             return self
 
-        harvester = Harvester()
-        try:
-            harvester.add_file(self._cti_file)
-            harvester.update()
-            if not harvester.device_info_list:
-                raise CameraError(
-                    f"No GigE Vision camera found via '{self._cti_file}'. "
-                    "Check cabling, PoE power (802.3af) and that the camera "
-                    "is on the same subnet as the host NIC."
-                )
-            search_key: Any = (
-                {"serial_number": self._serial_number}
-                if self._serial_number
-                else 0
+        last_error: Optional[Exception] = None
+        for attempt in range(1, CONNECTION_ATTEMPTS + 1):
+            _LOGGER.info(
+                "Connection attempt %d/%d (timeout %.0fs) ...",
+                attempt, CONNECTION_ATTEMPTS, CONNECTION_TIMEOUT_S,
             )
-            self._acquirer = harvester.create(search_key)
-        except CameraError:
-            harvester.reset()
-            raise
-        except Exception as exc:
-            harvester.reset()
-            raise CameraError(
-                f"Could not open camera (serial={self._serial_number!r}): {exc}"
-            ) from exc
+            harvester = Harvester()
+            try:
+                harvester.add_file(self._cti_file)
+                deadline = time.monotonic() + CONNECTION_TIMEOUT_S
+                while True:
+                    harvester.update()
+                    if harvester.device_info_list:
+                        break
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise CameraError(
+                            f"No GigE Vision camera found after "
+                            f"{CONNECTION_TIMEOUT_S:.0f}s on attempt {attempt}. "
+                            "Check cabling, PoE power (802.3af) and subnet."
+                        )
+                    wait = min(CONNECTION_SCAN_INTERVAL_S, remaining)
+                    _LOGGER.info(
+                        "No camera yet — retrying in %.0fs (%.0fs remaining) ...",
+                        wait, remaining,
+                    )
+                    time.sleep(wait)
 
-        self._harvester = harvester
+                search_key: Any = (
+                    {"serial_number": self._serial_number}
+                    if self._serial_number
+                    else 0
+                )
+                self._acquirer = harvester.create(search_key)
+                self._harvester = harvester
+                break  # connected successfully
+            except CameraError as exc:
+                harvester.reset()
+                last_error = exc
+                if attempt < CONNECTION_ATTEMPTS:
+                    _LOGGER.warning("Attempt %d failed: %s — retrying ...", attempt, exc)
+                else:
+                    raise CameraError(
+                        f"Could not connect after {CONNECTION_ATTEMPTS} attempts. "
+                        f"Last error: {exc}"
+                    ) from exc
+            except Exception as exc:
+                harvester.reset()
+                raise CameraError(
+                    f"Could not open camera (serial={self._serial_number!r}): {exc}"
+                ) from exc
+
         info = self.device_info
         _LOGGER.info(
             "Connected to %s (serial %s)",

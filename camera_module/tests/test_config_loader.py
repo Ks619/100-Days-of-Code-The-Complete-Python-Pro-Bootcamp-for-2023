@@ -18,11 +18,9 @@ camera:
   serial_number: "3200130"
   ip: "192.168.1.100"
   cti_file: "/path/to/producer.cti"
-  fetch_timeout: 10.0
 capture:
   delay: 1.5
-  count: 5
-  output_dir: "shots"
+  output_dir: "C:/shots"
   exposure_time: 20000
   gain: 6.0
   pixel_format: "BayerRG8"
@@ -31,10 +29,8 @@ capture:
     assert cfg.camera.serial_number == "3200130"
     assert cfg.camera.ip == "192.168.1.100"
     assert cfg.camera.cti_file == "/path/to/producer.cti"
-    assert cfg.camera.fetch_timeout == 10.0
     assert cfg.capture.delay == 1.5
-    assert cfg.capture.count == 5
-    assert cfg.capture.output_dir == "shots"
+    assert cfg.capture.output_dir == "C:/shots"
     assert cfg.capture.exposure_time == 20000.0
     assert cfg.capture.gain == 6.0
     assert cfg.capture.pixel_format == "BayerRG8"
@@ -60,18 +56,16 @@ capture:
 
 def test_missing_file_returns_defaults():
     cfg = Config.load("/nonexistent/config.yaml")
-    assert cfg.camera.fetch_timeout == 5.0
     assert cfg.capture.delay == 0.0
-    assert cfg.capture.count == 1
     assert cfg.capture.output_dir == "captures"
 
 
 def test_partial_config_fills_defaults(tmp_path):
     p = _write_yaml(tmp_path, """
 capture:
-  count: 3
+  delay: 2.0
 """)
     cfg = Config.load(p)
-    assert cfg.capture.count == 3
-    assert cfg.capture.delay == 0.0      # default
-    assert cfg.camera.fetch_timeout == 5.0  # default
+    assert cfg.capture.delay == 2.0
+    assert cfg.capture.output_dir == "captures"   # default
+    assert cfg.camera.serial_number is None        # default

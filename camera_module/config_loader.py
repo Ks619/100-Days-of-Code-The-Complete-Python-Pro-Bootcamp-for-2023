@@ -19,13 +19,11 @@ class CameraConfig:
     serial_number: Optional[str] = None
     ip: Optional[str] = None
     cti_file: Optional[str] = None
-    fetch_timeout: float = 5.0
 
 
 @dataclass
 class CaptureConfig:
     delay: float = 0.0
-    count: int = 1
     output_dir: str = "captures"
     exposure_time: Optional[float] = None
     gain: Optional[float] = None
@@ -58,11 +56,9 @@ class Config:
                 serial_number=cam_raw.get("serial_number"),
                 ip=cam_raw.get("ip"),
                 cti_file=cam_raw.get("cti_file"),
-                fetch_timeout=float(cam_raw.get("fetch_timeout", 5.0)),
             ),
             capture=CaptureConfig(
                 delay=float(cap_raw.get("delay", 0.0)),
-                count=int(cap_raw.get("count", 1)),
                 output_dir=str(cap_raw.get("output_dir", "captures")),
                 exposure_time=_optional_float(cap_raw.get("exposure_time")),
                 gain=_optional_float(cap_raw.get("gain")),
