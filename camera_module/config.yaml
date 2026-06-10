@@ -1,0 +1,13 @@
+camera:
+  serial_number: "3200130"   # printed on the camera label
+  ip: null                   # e.g. "192.168.1.100" — used if serial_number is null
+  cti_file: null             # null = auto-detected from GENICAM_GENTL64_PATH
+  fetch_timeout: 5.0         # seconds to wait for a frame after trigger
+
+capture:
+  delay: 0.5                 # seconds between captures
+  count: 1                   # number of images to capture
+  output_dir: "captures"     # directory to save images (created if missing)
+  exposure_time: null        # microseconds — null = keep camera default
+  gain: null                 # dB — null = keep camera default
+  pixel_format: null         # e.g. BayerRG8, Mono8 — null = keep camera default
