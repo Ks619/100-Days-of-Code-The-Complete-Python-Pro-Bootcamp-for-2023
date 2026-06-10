@@ -52,4 +52,4 @@ capture:
   #   RGB8      — colour converted on the camera, 8-bit per channel
   #   BGR8      — same as RGB8 but channel order matches OpenCV directly
   # null = keep the camera default.
-  pixel_format: "BayerRG8"
+  pixel_format: null

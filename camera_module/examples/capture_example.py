@@ -93,15 +93,30 @@ def main() -> int:
         return 0
 
     try:
-        with SonyXCG240Camera(cti_file=cti, serial_number=search_key) as camera:
+        with SonyXCG240Camera(
+            cti_file=cti, serial_number=search_key, auto_configure=False,
+        ) as camera:
+            # Set pixel format BEFORE trigger config (some cameras lock it after)
             if pixel_fmt:
-                camera.pixel_format = pixel_fmt
+                try:
+                    camera.pixel_format = pixel_fmt
+                except CameraError:
+                    avail = camera.available_pixel_formats
+                    print(
+                        f"WARNING: Could not set pixel_format='{pixel_fmt}'. "
+                        f"Available formats: {avail}. Using current: "
+                        f"'{camera.pixel_format}'",
+                        file=sys.stderr,
+                    )
+            camera.configure_software_trigger()
             if integration_time is not None:
                 camera.integration_time = integration_time
             if gain is not None:
                 camera.gain = gain
 
             print(f"Connected: {camera.device_info}")
+            print(f"Pixel format: {camera.pixel_format}")
+            print(f"Available formats: {camera.available_pixel_formats}")
             print(f"Saving images to: {Path(output).resolve()}")
             print("Press Ctrl+C to stop.\n")
 

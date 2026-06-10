@@ -433,6 +433,16 @@ class SonyXCG240Camera:
     def pixel_format(self, value: str) -> None:
         self._set_enum("PixelFormat", value)
 
+    @property
+    def available_pixel_formats(self) -> List[str]:
+        """Return the list of pixel format names this camera supports."""
+        node_map = self._require_node_map()
+        try:
+            entries = node_map.PixelFormat.symbolics
+            return list(entries)
+        except Exception:
+            return []
+
     def get_feature(self, name: str) -> Any:
         """Read any GenICam feature by name (escape hatch for power users)."""
         node_map = self._require_node_map()
