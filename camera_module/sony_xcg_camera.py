@@ -266,6 +266,7 @@ class SonyXCG240Camera:
         if self.is_connected:
             return self
 
+        _LOGGER.info("Using GenTL producer: %s", self._cti_file)
         last_error: Optional[Exception] = None
         for attempt in range(1, CONNECTION_ATTEMPTS + 1):
             _LOGGER.info(
