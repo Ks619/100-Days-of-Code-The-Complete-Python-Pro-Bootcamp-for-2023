@@ -28,8 +28,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from camera_module import CameraError, SonyXCG240Camera, find_cti_file, list_devices
+from camera_module import CameraError, CaptureTimeoutError, SonyXCG240Camera, find_cti_file, list_devices
 from camera_module.config_loader import Config
+
+MAX_CONSECUTIVE_TIMEOUTS = 3
+_LOGGER = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,13 +47,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--serial", default=None, help="Camera serial number.")
     parser.add_argument("--ip", default=None, help="Camera IP address.")
     parser.add_argument("--cti", default=None, help="Path to the GenTL producer (*.cti).")
+    parser.add_argument("--packet-size", type=int, default=None, dest="packet_size", help="GigE packet size (1500=safe, 8164=jumbo).")
 
     # Capture overrides
     parser.add_argument("--delay", type=float, default=None, help="Seconds between captures.")
     parser.add_argument("--output", default=None, help="Output directory (created if missing).")
     parser.add_argument("--integration-time", type=float, default=None, dest="integration_time", help="Integration (exposure) time in ms (e.g. 20 = 20 ms).")
     parser.add_argument("--gain", type=float, default=None, help="Gain (dB).")
-    parser.add_argument("--pixel-format", default=None, help="e.g. BayerRG8, Mono8.")
+    parser.add_argument("--pixel-format", default=None, help="e.g. BayerBG8, BayerBG10Packed.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging.")
     return parser.parse_args()
 
@@ -64,14 +68,15 @@ def main() -> int:
 
     cfg = Config.load(args.config)
 
-    serial    = args.serial or cfg.camera.serial_number
-    ip        = args.ip     or cfg.camera.ip
-    cti       = args.cti    or cfg.camera.cti_file
-    delay     = args.delay    if args.delay    is not None else cfg.capture.delay
-    output    = args.output   or cfg.capture.output_dir
+    serial      = args.serial or cfg.camera.serial_number
+    ip          = args.ip     or cfg.camera.ip
+    cti         = args.cti    or cfg.camera.cti_file
+    packet_size = args.packet_size if args.packet_size is not None else cfg.camera.packet_size
+    delay       = args.delay    if args.delay    is not None else cfg.capture.delay
+    output      = args.output   or cfg.capture.output_dir
     integration_time = args.integration_time if args.integration_time is not None else cfg.capture.integration_time
-    gain      = args.gain     if args.gain     is not None else cfg.capture.gain
-    pixel_fmt = args.pixel_format or cfg.capture.pixel_format
+    gain        = args.gain     if args.gain     is not None else cfg.capture.gain
+    pixel_fmt   = args.pixel_format or cfg.capture.pixel_format
 
     search_key = serial or ip
 
@@ -92,6 +97,7 @@ def main() -> int:
             print(f"[{index}] " + ", ".join(f"{k}={v}" for k, v in device.items() if v))
         return 0
 
+    index = 0
     try:
         with SonyXCG240Camera(
             cti_file=cti, serial_number=search_key, auto_configure=False,
@@ -108,6 +114,15 @@ def main() -> int:
                         f"'{camera.pixel_format}'",
                         file=sys.stderr,
                     )
+
+            # Set packet size BEFORE starting acquisition
+            if packet_size is not None:
+                try:
+                    camera.set_feature("GevSCPSPacketSize", packet_size)
+                    _LOGGER.info("Packet size set to %d bytes", packet_size)
+                except CameraError:
+                    _LOGGER.warning("Could not set GevSCPSPacketSize=%d", packet_size)
+
             camera.configure_software_trigger()
             if integration_time is not None:
                 camera.integration_time = integration_time
@@ -116,15 +131,31 @@ def main() -> int:
 
             print(f"Connected: {camera.device_info}")
             print(f"Pixel format: {camera.pixel_format}")
-            print(f"Available formats: {camera.available_pixel_formats}")
             print(f"Saving images to: {Path(output).resolve()}")
             print("Press Ctrl+C to stop.\n")
 
-            index = 0
+            consecutive_timeouts = 0
             while True:
-                index += 1
-                saved = camera.save_image(output)
-                print(f"[{index}] saved {saved}")
+                try:
+                    index += 1
+                    saved = camera.save_image(output)
+                    print(f"[{index}] saved {saved}")
+                    consecutive_timeouts = 0
+                except CaptureTimeoutError:
+                    consecutive_timeouts += 1
+                    print(
+                        f"[{index}] WARNING: frame timeout "
+                        f"({consecutive_timeouts}/{MAX_CONSECUTIVE_TIMEOUTS})",
+                        file=sys.stderr,
+                    )
+                    if consecutive_timeouts >= MAX_CONSECUTIVE_TIMEOUTS:
+                        print(
+                            "ERROR: Too many consecutive timeouts. "
+                            "Enable jumbo frames (MTU 9000) on your NIC, "
+                            "or lower packet_size in config.yaml.",
+                            file=sys.stderr,
+                        )
+                        return 1
                 if delay:
                     time.sleep(delay)
 

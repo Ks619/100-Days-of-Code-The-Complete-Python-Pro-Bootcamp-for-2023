@@ -13,8 +13,16 @@ camera:
   # Full path to the GenTL producer driver file (*.cti).
   # null = auto-detected from the GENICAM_GENTL64_PATH environment variable
   # (set automatically by the driver installer, e.g. Spinnaker, mvIMPACT).
-  # Example: "C:/Program Files/Teledyne/Spinnaker/cti64/vs2015/Spinnaker_GenTL_v140.cti"
+  # Example: "C:/Program Files/Balluff/ImpactAcquire/bin/x64/mvGenTLProducer.cti"
   cti_file: null
+
+  # GigE Vision packet size in bytes.
+  # Larger = faster transfer but requires jumbo frames (MTU 9000) on the NIC.
+  # If you get timeout errors after a few frames, lower this value.
+  #   1500 — safe default, works with any NIC without special configuration
+  #   8164 — optimal for jumbo frames (MTU 9000 must be enabled on the NIC)
+  # null = keep camera default (usually 1500).
+  packet_size: 1500
 
 capture:
   # Delay between consecutive captures, in seconds.
@@ -42,14 +50,8 @@ capture:
   gain: null
 
   # How each pixel is encoded in the data stream sent from camera to PC.
-  # Options:
-  #   BayerRG8  — colour, raw Bayer pattern, 8-bit  (recommended, fastest)
-  #   BayerRG10 — colour, raw Bayer pattern, 10-bit (more detail in shadows)
-  #   BayerRG12 — colour, raw Bayer pattern, 12-bit (highest quality colour)
-  #   Mono8     — greyscale, 8-bit  (use when colour is not needed)
-  #   Mono10    — greyscale, 10-bit
-  #   Mono12    — greyscale, 12-bit
-  #   RGB8      — colour converted on the camera, 8-bit per channel
-  #   BGR8      — same as RGB8 but channel order matches OpenCV directly
-  # null = keep the camera default.
+  # Your XCG-CG240C supports:
+  #   BayerBG8       — colour, raw Bayer pattern, 8-bit (default, fastest)
+  #   BayerBG10Packed — colour, raw Bayer pattern, 10-bit packed (more shadow detail)
+  # null = keep the camera default (BayerBG8).
   pixel_format: null

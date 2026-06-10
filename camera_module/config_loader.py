@@ -19,6 +19,7 @@ class CameraConfig:
     serial_number: Optional[str] = None
     ip: Optional[str] = None
     cti_file: Optional[str] = None
+    packet_size: Optional[int] = None
 
 
 @dataclass
@@ -56,6 +57,7 @@ class Config:
                 serial_number=cam_raw.get("serial_number"),
                 ip=cam_raw.get("ip"),
                 cti_file=cam_raw.get("cti_file"),
+                packet_size=_optional_int(cam_raw.get("packet_size")),
             ),
             capture=CaptureConfig(
                 delay=float(cap_raw.get("delay", 0.0)),
@@ -69,3 +71,7 @@ class Config:
 
 def _optional_float(value) -> Optional[float]:
     return float(value) if value is not None else None
+
+
+def _optional_int(value) -> Optional[int]:
+    return int(value) if value is not None else None
