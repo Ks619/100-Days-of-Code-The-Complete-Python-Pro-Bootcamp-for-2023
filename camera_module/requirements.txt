@@ -1,0 +1,8 @@
+# Runtime dependencies for the Sony XCG-CG240C camera module.
+# A GenTL producer (*.cti) must be installed separately - see README.md.
+harvesters>=1.4.0
+numpy>=1.21
+opencv-python>=4.5
+
+# Optional, for running the unit tests:
+# pytest>=7.0
