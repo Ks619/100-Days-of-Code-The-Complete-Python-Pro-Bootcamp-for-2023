@@ -2,3 +2,6 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 captures/
+
+# Bootcamp day projects (not part of this branch)
+Day */
