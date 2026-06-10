@@ -407,13 +407,13 @@ class SonyXCG240Camera:
         return info
 
     @property
-    def exposure_time(self) -> float:
-        """Exposure time in microseconds."""
-        return float(self._get_first_feature(self._EXPOSURE_NODES))
+    def integration_time(self) -> float:
+        """Integration (exposure) time in milliseconds."""
+        return float(self._get_first_feature(self._EXPOSURE_NODES)) / 1000.0
 
-    @exposure_time.setter
-    def exposure_time(self, microseconds: float) -> None:
-        self._set_first_feature(self._EXPOSURE_NODES, microseconds)
+    @integration_time.setter
+    def integration_time(self, milliseconds: float) -> None:
+        self._set_first_feature(self._EXPOSURE_NODES, milliseconds * 1000.0)
 
     @property
     def gain(self) -> float:

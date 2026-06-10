@@ -25,7 +25,7 @@ class CameraConfig:
 class CaptureConfig:
     delay: float = 0.0
     output_dir: str = "captures"
-    exposure_time: Optional[float] = None
+    integration_time: Optional[float] = None  # milliseconds
     gain: Optional[float] = None
     pixel_format: Optional[str] = None
 
@@ -60,7 +60,7 @@ class Config:
             capture=CaptureConfig(
                 delay=float(cap_raw.get("delay", 0.0)),
                 output_dir=str(cap_raw.get("output_dir", "captures")),
-                exposure_time=_optional_float(cap_raw.get("exposure_time")),
+                integration_time=_optional_float(cap_raw.get("integration_time")),
                 gain=_optional_float(cap_raw.get("gain")),
                 pixel_format=cap_raw.get("pixel_format") or None,
             ),

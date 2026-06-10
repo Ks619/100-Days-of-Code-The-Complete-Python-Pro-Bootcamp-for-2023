@@ -234,12 +234,12 @@ def test_disconnect_releases_resources(monkeypatch, tmp_path):
     assert not cam.is_connected
 
 
-def test_exposure_and_gain_properties(camera):
-    camera.exposure_time = 20000.0
+def test_integration_time_and_gain_properties(camera):
+    camera.integration_time = 20.0   # 20 ms -> 20000 µs on the camera
     camera.gain = 6.0
-    assert camera.exposure_time == 20000.0
+    assert camera.integration_time == 20.0
     assert camera.gain == 6.0
-    assert FakeHarvester.node_map.ExposureTime.value == 20000.0
+    assert FakeHarvester.node_map.ExposureTime.value == 20000.0  # stored as µs
 
 
 def test_unsupported_pixel_format_raises():

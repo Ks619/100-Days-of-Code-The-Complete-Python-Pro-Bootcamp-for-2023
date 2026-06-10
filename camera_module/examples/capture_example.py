@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:
     # Capture overrides
     parser.add_argument("--delay", type=float, default=None, help="Seconds between captures.")
     parser.add_argument("--output", default=None, help="Output directory (created if missing).")
-    parser.add_argument("--exposure", type=float, default=None, help="Exposure time (µs).")
+    parser.add_argument("--integration-time", type=float, default=None, dest="integration_time", help="Integration (exposure) time in ms (e.g. 20 = 20 ms).")
     parser.add_argument("--gain", type=float, default=None, help="Gain (dB).")
     parser.add_argument("--pixel-format", default=None, help="e.g. BayerRG8, Mono8.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging.")
@@ -69,7 +69,7 @@ def main() -> int:
     cti       = args.cti    or cfg.camera.cti_file
     delay     = args.delay    if args.delay    is not None else cfg.capture.delay
     output    = args.output   or cfg.capture.output_dir
-    exposure  = args.exposure if args.exposure is not None else cfg.capture.exposure_time
+    integration_time = args.integration_time if args.integration_time is not None else cfg.capture.integration_time
     gain      = args.gain     if args.gain     is not None else cfg.capture.gain
     pixel_fmt = args.pixel_format or cfg.capture.pixel_format
 
@@ -96,8 +96,8 @@ def main() -> int:
         with SonyXCG240Camera(cti_file=cti, serial_number=search_key) as camera:
             if pixel_fmt:
                 camera.pixel_format = pixel_fmt
-            if exposure is not None:
-                camera.exposure_time = exposure
+            if integration_time is not None:
+                camera.integration_time = integration_time
             if gain is not None:
                 camera.gain = gain
 

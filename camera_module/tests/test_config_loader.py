@@ -21,7 +21,7 @@ camera:
 capture:
   delay: 1.5
   output_dir: "C:/shots"
-  exposure_time: 20000
+  integration_time: 20
   gain: 6.0
   pixel_format: "BayerRG8"
 """)
@@ -31,7 +31,7 @@ capture:
     assert cfg.camera.cti_file == "/path/to/producer.cti"
     assert cfg.capture.delay == 1.5
     assert cfg.capture.output_dir == "C:/shots"
-    assert cfg.capture.exposure_time == 20000.0
+    assert cfg.capture.integration_time == 20.0
     assert cfg.capture.gain == 6.0
     assert cfg.capture.pixel_format == "BayerRG8"
 
@@ -42,14 +42,14 @@ camera:
   serial_number: null
   ip: null
 capture:
-  exposure_time: null
+  integration_time: null
   gain: null
   pixel_format: null
 """)
     cfg = Config.load(p)
     assert cfg.camera.serial_number is None
     assert cfg.camera.ip is None
-    assert cfg.capture.exposure_time is None
+    assert cfg.capture.integration_time is None
     assert cfg.capture.gain is None
     assert cfg.capture.pixel_format is None
 

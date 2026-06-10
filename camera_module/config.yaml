@@ -1,11 +1,55 @@
 camera:
-  serial_number: "3200130"   # printed on the camera label
-  ip: null                   # e.g. "192.168.1.100" — used if serial_number is null
-  cti_file: null             # null = auto-detected from GENICAM_GENTL64_PATH
+  # Serial number printed on the camera label (e.g. "3200130").
+  # Used to open the correct camera when multiple cameras are connected.
+  # Set to null to connect to the first camera found.
+  serial_number: "3200130"
+
+  # IP address of the camera on the network (e.g. "192.168.1.100").
+  # Only used when serial_number is null.
+  # The camera defaults to DHCP; if no DHCP server is present it falls
+  # back to a link-local address (169.254.x.x).
+  ip: null
+
+  # Full path to the GenTL producer driver file (*.cti).
+  # null = auto-detected from the GENICAM_GENTL64_PATH environment variable
+  # (set automatically by the driver installer, e.g. Spinnaker, mvIMPACT).
+  # Example: "C:/Program Files/Teledyne/Spinnaker/cti64/vs2015/Spinnaker_GenTL_v140.cti"
+  cti_file: null
 
 capture:
-  delay: 0.5                 # seconds between captures
+  # Delay between consecutive captures, in seconds.
+  # 0.0 = capture as fast as the camera allows (~41 fps at full resolution).
+  # Example: 0.5 = one image every 500 ms.
+  delay: 0.5
+
+  # Full path to the folder where images are saved.
+  # The folder is created automatically if it does not exist.
   output_dir: "C:/Users/KfirShuster/PycharmProjects/best_camera_module/captures"
-  exposure_time: null        # microseconds (e.g. 20000 = 20ms) — null = camera default
-  gain: null                 # dB (e.g. 6.0) — null = camera default
-  pixel_format: "BayerRG8"  # BayerRG8 = colour | Mono8 = greyscale | RGB8 = colour on-camera
+
+  # How long the sensor collects light per frame, in milliseconds (ms).
+  # Longer = brighter image, but camera moves more slowly.
+  # Shorter = darker image, but freezes fast motion better.
+  # Typical range for the XCG-CG240C: 0.02 ms – 1000 ms.
+  # null = keep whatever value the camera currently has.
+  # Example: 20 = 20 ms exposure.
+  integration_time: null
+
+  # Amplification applied to the sensor signal after exposure, in dB.
+  # Higher gain = brighter image but more noise/grain.
+  # 0.0 = no amplification (cleanest image).
+  # Typical range for the XCG-CG240C: 0.0 dB – 18.0 dB.
+  # null = keep the camera default (usually 0.0 dB).
+  gain: null
+
+  # How each pixel is encoded in the data stream sent from camera to PC.
+  # Options:
+  #   BayerRG8  — colour, raw Bayer pattern, 8-bit  (recommended, fastest)
+  #   BayerRG10 — colour, raw Bayer pattern, 10-bit (more detail in shadows)
+  #   BayerRG12 — colour, raw Bayer pattern, 12-bit (highest quality colour)
+  #   Mono8     — greyscale, 8-bit  (use when colour is not needed)
+  #   Mono10    — greyscale, 10-bit
+  #   Mono12    — greyscale, 12-bit
+  #   RGB8      — colour converted on the camera, 8-bit per channel
+  #   BGR8      — same as RGB8 but channel order matches OpenCV directly
+  # null = keep the camera default.
+  pixel_format: "BayerRG8"
