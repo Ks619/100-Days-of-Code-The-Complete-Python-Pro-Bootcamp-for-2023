@@ -182,13 +182,18 @@ def test_capture_fires_software_trigger_and_demosaics(camera):
     assert r.mean() > g.mean()
 
 
-def test_save_image_writes_timestamped_png(camera, tmp_path):
+def test_save_image_writes_timestamped_png_in_date_folder(camera, tmp_path):
+    import re
+    from datetime import date
     out_dir = tmp_path / "captures"
     saved = camera.save_image(out_dir)
     assert saved.exists()
-    assert saved.parent == out_dir
     assert saved.suffix == ".png"
-    assert saved.name.startswith("XCG-CG240C_")
+    # Image lands in a date subfolder: captures/YYYY-MM-DD/
+    assert saved.parent.name == date.today().isoformat()
+    assert saved.parent.parent == out_dir
+    # Filename format: 2026-06-10T18;05;56;985.png
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2};\d{2};\d{2};\d{3}\.png", saved.name)
 
 
 def test_save_image_explicit_path(camera, tmp_path):

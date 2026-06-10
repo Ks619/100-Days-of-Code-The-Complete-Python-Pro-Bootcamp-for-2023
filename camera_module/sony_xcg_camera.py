@@ -553,8 +553,10 @@ class SonyXCG240Camera:
 
         target = Path(path) if path is not None else Path("captures")
         if path is None or target.suffix == "":
-            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S_%f")
-            target = target / f"{self.MODEL_NAME}_{timestamp}.png"
+            now = datetime.now()
+            date_folder = now.strftime("%Y-%m-%d")
+            timestamp = now.strftime("%Y-%m-%dT%H;%M;%S;") + f"{now.microsecond // 1000:03d}"
+            target = target / date_folder / f"{timestamp}.png"
         target.parent.mkdir(parents=True, exist_ok=True)
 
         if not cv2.imwrite(str(target), image):
