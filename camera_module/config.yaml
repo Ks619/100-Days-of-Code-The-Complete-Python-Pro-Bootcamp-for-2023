@@ -13,7 +13,10 @@ camera:
   # Full path to the GenTL producer driver file (*.cti).
   # null = auto-detected from the GENICAM_GENTL64_PATH environment variable
   # (set automatically by the driver installer, e.g. Spinnaker, mvIMPACT).
-  # Example: "C:/Program Files/Balluff/ImpactAcquire/bin/x64/mvGenTLProducer.cti"
+  # NOTE: Use forward slashes (/) or single quotes for Windows paths.
+  #   OK:  'C:\Program Files\Balluff\ImpactAcquire\bin\x64\mvGenTLProducer.cti'
+  #   OK:  C:/Program Files/Balluff/ImpactAcquire/bin/x64/mvGenTLProducer.cti
+  #   BAD: "C:\Program Files\..."   (backslash + double quotes = YAML error)
   cti_file: null
 
   # GigE Vision packet size in bytes.
@@ -32,7 +35,11 @@ capture:
 
   # Full path to the folder where images are saved.
   # The folder is created automatically if it does not exist.
-  output_dir: "C:/Users/KfirShuster/PycharmProjects/best_camera_module/captures"
+  # NOTE: Use forward slashes (/) or single quotes for Windows paths.
+  #   OK:  'C:\Users\You\captures'
+  #   OK:  C:/Users/You/captures
+  #   BAD: "C:\Users\..."   (backslash + double quotes = YAML error)
+  output_dir: captures
 
   # How long the sensor collects light per frame, in milliseconds (ms).
   # Longer = brighter image, but camera moves more slowly.

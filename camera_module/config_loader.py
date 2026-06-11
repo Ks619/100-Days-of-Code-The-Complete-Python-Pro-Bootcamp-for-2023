@@ -62,8 +62,19 @@ class Config:
         if not config_path.exists():
             return cls()
 
-        with open(config_path) as f:
-            raw = yaml.safe_load(f) or {}
+        try:
+            with open(config_path) as f:
+                raw = yaml.safe_load(f) or {}
+        except yaml.YAMLError as exc:
+            raise ValueError(
+                f"Failed to parse {config_path}: {exc}\n\n"
+                "Tip: Windows paths with backslashes in double quotes cause "
+                "YAML errors.\n"
+                "Use forward slashes or single quotes:\n"
+                "  OK:  output_dir: 'C:\\Users\\You\\captures'\n"
+                "  OK:  output_dir: C:/Users/You/captures\n"
+                '  BAD: output_dir: "C:\\Users\\You\\captures"'
+            ) from exc
 
         cam_raw = raw.get("camera", {}) or {}
         cap_raw = raw.get("capture", {}) or {}
