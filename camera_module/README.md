@@ -46,9 +46,9 @@ The producer is the driver layer that speaks GigE Vision. Install **one** of:
 
 | Producer | Notes |
 |---|---|
-| [STEMMER Common Vision Blox CameraSuite](https://www.commonvisionblox.com/) | Free, vendor-neutral, `GEVTL.cti` — no watermark with third-party cameras |
-| [rc_genicam_api releases](https://github.com/roboception/rc_genicam_api/releases) | Free, no registration; bundles Baumer's vendor-neutral `bgapi2_gige.cti` |
-| [Pleora eBUS SDK](https://www.pleora.com/products/ebus-sdk/) | `ebTLProducer.cti` — Sony XCG cameras are built on Pleora technology; select the **GenTL Producer** component during install |
+| [STEMMER CVB CameraSuite](https://www.stemmer-imaging.com/en/products/software/cvb-camerasuite/) | **Free, no expiry, vendor-neutral.** Installs `GEVTL.cti`. Recommended. |
+| [Baumer GAPI SDK](https://www.baumer.com/us/en/service-support/download-center/) | **Free**, vendor-neutral, installs `bgapi2_gige.cti` |
+| [Pleora eBUS SDK ≤ v5](https://www.pleora.com/products/ebus-sdk/) | `ebTLProducer.cti` — v5 was free; **v6+ requires a paid licence** |
 | [Balluff / MATRIX VISION ImpactAcquire](https://www.balluff.com/en-de/digital-solutions-and-services/machine-vision-software) | `mvGenTLProducer.cti` — **only free with Balluff cameras**. With third-party cameras (like the XCG) it runs as a time-limited evaluation, then watermarks every frame |
 
 The installer normally sets the `GENICAM_GENTL64_PATH` environment variable;
