@@ -3,5 +3,13 @@ __pycache__/
 .pytest_cache/
 captures/
 
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# IDE
+.idea/
+
 # Bootcamp day projects (not part of this branch)
 Day */

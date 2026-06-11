@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -11,7 +12,21 @@ try:
 except ImportError:
     yaml = None
 
-DEFAULT_CONFIG_PATH = Path(__file__).parent / "config.yaml"
+
+def default_config_path() -> Path:
+    """Where config.yaml is expected to live.
+
+    - Running as a normal Python script: next to this module
+      (camera_module/config.yaml).
+    - Running as a frozen .exe (PyInstaller): next to the .exe, so the
+      file stays editable after packaging.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent / "config.yaml"
+    return Path(__file__).parent / "config.yaml"
+
+
+DEFAULT_CONFIG_PATH = default_config_path()
 
 
 @dataclass
@@ -35,6 +50,7 @@ class CaptureConfig:
 class Config:
     camera: CameraConfig = field(default_factory=CameraConfig)
     capture: CaptureConfig = field(default_factory=CaptureConfig)
+    source: Optional[Path] = None  # which file the settings came from
 
     @classmethod
     def load(cls, path: Optional[str | Path] = None) -> "Config":
@@ -42,7 +58,7 @@ class Config:
         if yaml is None:
             raise ImportError("PyYAML is required: pip install pyyaml")
 
-        config_path = Path(path) if path else DEFAULT_CONFIG_PATH
+        config_path = Path(path) if path else default_config_path()
         if not config_path.exists():
             return cls()
 
@@ -66,6 +82,7 @@ class Config:
                 gain=_optional_float(cap_raw.get("gain")),
                 pixel_format=cap_raw.get("pixel_format") or None,
             ),
+            source=config_path,
         )
 
 

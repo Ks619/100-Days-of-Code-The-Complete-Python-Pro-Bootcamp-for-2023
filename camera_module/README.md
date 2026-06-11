@@ -124,6 +124,27 @@ python camera_module/examples/capture_example.py \
     --count 10 --interval 0.5 --exposure 20000 --output shots/
 ```
 
+## Building a standalone .exe (no Python required to run)
+
+From the repository root, on Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File camera_module\build_exe.ps1
+```
+
+This produces:
+
+```
+dist\
+├── camera_capture.exe   ← double-click or run from a terminal
+└── config.yaml          ← edit settings any time; read on every start
+```
+
+The exe looks for `config.yaml` **in its own folder**, so you can move the
+two files together anywhere (USB stick, another PC — the GenTL producer
+must still be installed on that PC). All CLI flags keep working, e.g.
+`camera_capture.exe --list`.
+
 ## API summary
 
 | Member | Description |

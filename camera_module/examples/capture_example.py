@@ -67,6 +67,15 @@ def main() -> int:
     )
 
     cfg = Config.load(args.config)
+    if cfg.source:
+        print(f"Loaded config: {cfg.source}")
+    else:
+        from camera_module.config_loader import default_config_path
+        print(
+            f"WARNING: no config.yaml found at {default_config_path()} — "
+            "using built-in defaults.",
+            file=sys.stderr,
+        )
 
     serial      = args.serial or cfg.camera.serial_number
     ip          = args.ip     or cfg.camera.ip
