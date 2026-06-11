@@ -42,14 +42,14 @@ pip install -r camera_module/requirements.txt
 
 ### 2. A GenTL producer (`*.cti`)
 
-The producer is the driver layer that speaks GigE Vision. Install **one** of
-(all work with third-party cameras like the XCG):
+The producer is the driver layer that speaks GigE Vision. Install **one** of:
 
 | Producer | Notes |
 |---|---|
-| [Balluff / MATRIX VISION mvIMPACT Acquire](https://www.balluff.com/en-de/digital-solutions-and-services/machine-vision-software) | Free, Windows + Linux, `mvGenTLProducer.cti` — most common choice with harvesters |
-| [Pleora eBUS SDK](https://www.pleora.com/products/ebus-sdk/) | `ebTLProducer.cti` — Sony references Pleora drivers for the XCG series |
-| [STEMMER Common Vision Blox](https://www.commonvisionblox.com/) | CameraSuite is free, `GEVTL.cti` |
+| [STEMMER Common Vision Blox CameraSuite](https://www.commonvisionblox.com/) | Free, vendor-neutral, `GEVTL.cti` — no watermark with third-party cameras |
+| [rc_genicam_api releases](https://github.com/roboception/rc_genicam_api/releases) | Free, no registration; bundles Baumer's vendor-neutral `bgapi2_gige.cti` |
+| [Pleora eBUS SDK](https://www.pleora.com/products/ebus-sdk/) | `ebTLProducer.cti` — Sony XCG cameras are built on Pleora technology; select the **GenTL Producer** component during install |
+| [Balluff / MATRIX VISION ImpactAcquire](https://www.balluff.com/en-de/digital-solutions-and-services/machine-vision-software) | `mvGenTLProducer.cti` — **only free with Balluff cameras**. With third-party cameras (like the XCG) it runs as a time-limited evaluation, then watermarks every frame |
 
 The installer normally sets the `GENICAM_GENTL64_PATH` environment variable;
 the module auto-discovers the `.cti` from there, or you can pass the path
@@ -186,5 +186,6 @@ pytest camera_module/tests -v
 | `No GenTL producer (*.cti) found` | Install a producer (see above) or pass `cti_file=` |
 | `No GigE Vision camera found` | Check PoE power/link LED; same subnet; disable firewall on the camera NIC; some producers need admin rights for "IP force" |
 | `CaptureTimeoutError` | Increase `fetch_timeout`; enable jumbo frames (MTU 9000); lower `GevSCPSPacketSize`; ensure `TriggerMode=On` wasn't reset by another tool |
+| Balluff banner in every image: *"unsupported third party device … free evaluation period has ended"* | Balluff's producer is only free with Balluff cameras. Install a vendor-neutral producer (CVB CameraSuite, rc_genicam_api, or eBUS — see table above) and point `cti_file` in config.yaml at the new `.cti` |
 | Image looks green/checkered | Wrong Bayer order — set `cam.pixel_format = "BayerRG8"` |
 | Colours swapped (red↔blue) | You're displaying the BGR array as RGB — use `cv2.cvtColor(img, cv2.COLOR_BGR2RGB)` |
